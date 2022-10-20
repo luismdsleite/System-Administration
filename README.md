@@ -126,6 +126,13 @@ Default location of ssh key: */home/user/.ssh*
     # create dir of authenticated user
     su - adsdevil
 
+### Setup auto mount
+
+    yum install autofs
+
+
+
+
 ## Server - Openmediavault
 ------------
 
@@ -226,12 +233,14 @@ Final RAID SETUP for the project
     # loop to create and associate devices to the files
     for i in disk{1..4}-1GB; do sudo losetup --find --show $i; done
 
-    # Create 4 disk with 500M
+    # Create 2 disk with 500M
     for i in disk{5..6}-500M; do dd if=/dev/zero of=$i bs=1024 count=524288; done
 
     # loop to create and associate devices to the files
     for i in disk{5..6}-500M; do sudo losetup --find --show $i; done
     
+IMPORTANT: Create systemd script to mapp loop devices
+
 
 ## Server - Openldap
 ------------
@@ -336,25 +345,7 @@ Final RAID SETUP for the project
 
 External link: https://www.server-world.info/en/note?os=CentOS_7&p=openldap&f=1
 
-### Add users
-
-    vi adduser-aauser.ldif
-        dn: uid=aauser,ou=People,dc=ads,dc=dcc
-        uid: aauser
-        cn: aauser
-        objectClass: account
-        objectClass: posixAccount
-        objectClass: top
-        objectClass: shadowAccount
-        shadowLastChange: 17838
-        shadowMax: 99999
-        shadowWarning: 7
-        loginShell: /bin/bash
-        uidNumber: 1001
-        gidNumber: 1001
-        homeDirectory: /home/aauser
-
-    ldapadd -x -D cn=Manager,dc=ads,dc=dcc -W -f adduser-aauser.ldif
+### Add user and group
 
     vi adduser-adsdevil.ldif
         dn: uid=adsdevil,ou=People,dc=ads,dc=dcc
@@ -368,14 +359,33 @@ External link: https://www.server-world.info/en/note?os=CentOS_7&p=openldap&f=1
         shadowMax: 99999
         shadowWarning: 7
         loginShell: /bin/bash
-        uidNumber: 1001
-        gidNumber: 1001
-        homeDirectory: /home/adsdevil
+        uidNumber: 2002
+        gidNumber: 2002
+        homeDirectory: /rhome/adsdevil
 
     ldapadd -x -D cn=Manager,dc=ads,dc=dcc -W -f adduser-adsdevil.ldif
 
     # change user password
     ldappasswd  -S -x -W -D "cn=Manager,dc=ads,dc=dcc" "uid=adsdevil,ou=People,dc=ads,dc=dcc"
+
+
+    vi adduser-group.ldif
+        dn: cn=adsdevil,ou=People,dc=ads,dc=dcc
+        gidNumber: 5001
+        objectClass: top
+        objectClass: posixGroup
+        cn: adsdevil
+
+    ldapadd -x -D cn=Manager,dc=ads,dc=dcc -W -f adduser-group.ldif
+
+
+Delete user from DB:
+    
+    vi delete-user.ldif
+        dn: uid=aauser,ou=Developers,dc=ads,dc=dcc
+        changetype: delete
+
+    ldapmodify -Z -x -W -D "cn=Manager,dc=ads,dc=dcc" -f delete-user.ldif 
 
 ### Opensl setup
 
