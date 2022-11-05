@@ -241,6 +241,40 @@ Final RAID SETUP for the project
     
 IMPORTANT: Create systemd script to mapp loop devices
 
+Restore RAID after reboot
+
+    for i in disk{1..4}-1GB; do sudo losetup --find --show $i; done
+    
+    for i in disk{5..6}-500M; do sudo losetup --find --show $i; done
+
+Creating 1 disk with 10G and partitions
+
+    # partition disk
+    fdisk
+
+    # create raid 10
+    sudo mdadm --create --verbose /dev/md0 --level=10 --raid-devices=4 /dev/sda5 /dev/sda6 /dev/sda7 /dev/sda8
+
+    # Create PV
+    pvcreate /dev/sda9
+    pvcreate /dev/sda10
+
+Create LDAP user 
+
+    # create users from webui
+
+    # change UID and GID as LDAP server
+    vipw # user
+    vigr # group
+
+Automount home directory
+
+    vi /etc/auto.home
+        * -rw,nfs4 NFS-IP:/radi-sh/&
+
+    vi /etc/auto.master
+        /home /etc/auto.home
+
 
 ## Server - Openldap
 ------------
